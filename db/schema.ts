@@ -27,3 +27,23 @@ export const knowledgeItems = pgTable('knowledge_items', {
   url: text('url'), // for links
   createdAt: timestamp('created_at').defaultNow()
 });
+
+
+// Useful raw SQL trigger to auto-update updatedAt (optional for POC)
+// export const touchUpdatedAt = sql`
+// DO $$
+// BEGIN
+//   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'collections_touch_updated_at') THEN
+//     CREATE OR REPLACE FUNCTION touch_updated_at() RETURNS TRIGGER AS $$
+//     BEGIN
+//       NEW.updated_at = NOW();
+//       RETURN NEW;
+//     END;
+//     $$ LANGUAGE plpgsql;
+
+//     CREATE TRIGGER collections_touch_updated_at
+//       BEFORE UPDATE ON collections
+//       FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+//   END IF;
+// END $$;
+// `;
