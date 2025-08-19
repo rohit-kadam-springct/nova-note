@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
+@theme {
+  /* Font stack */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+
+  /* Color tokens */
+  --color-bg: 12 12 14;          /* near-black */
+  --color-card: 20 20 24;        /* dark panel */
+  --color-muted: 120 120 130;    /* muted gray */
+  --color-foreground: 230 230 235;
+  --color-primary: 120 102 255;   /* violet */
+  --color-accent: 0 199 184;      /* cyan accent */
+
+  /* Radii, spacing if needed */
+  --radius-md: 12px;
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  max-width: 1200px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-foreground));
+}
+
+/* Cards and surfaces */
+.card {
+  background: rgb(var(--color-card));
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+}
+
+/* Buttons (primary/minimal) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: opacity .15s ease, transform .05s ease;
+}
+
+.btn:hover { opacity: .9; }
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: rgb(var(--color-primary));
+  color: black;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: rgb(var(--color-foreground));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Inputs */
+.input, .textarea, .select {
+  width: 100%;
+  background: rgb(var(--color-card));
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgb(var(--color-foreground));
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+
+/* Subtle text */
+.text-muted { color: rgb(var(--color-muted)); }
+
+/* Utility shorthands using @utility */
+@utility hstack {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@utility vstack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
