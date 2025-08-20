@@ -172,7 +172,25 @@ export default function WorkspaceClient({ id }: { id: string }) {
         {tab === "chat" ? (
           <div className="card p-4 min-h-[60vh]">
             <p className="text-muted">Chat panel will appear here. Ask questions using your collection’s knowledge.</p>
-            {/* We’ll wire the real chat in Hour 6–7/7–8 */}
+            <div className="card p-4 min-h-[60vh]">
+              <ChatPanel
+                collectionId={id}
+                items={items ?? []}
+                onReferenceClick={(ref) => {
+                  const matched = items?.find(it => it.id === ref.itemId);
+                  if (!matched) return;
+                  // For links: switch to iframe tab + open sourceUrl
+                  if (matched.type === "link" && matched.url) {
+                    setSelectedLink(matched.url);
+                    setTab("iframe");
+                  }
+                  // For text/pdf: show source placeholder
+                  else {
+                    alert(`Source: ${matched.title} (${matched.type})`);
+                  }
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="card p-0 min-h-[60vh] overflow-hidden">
@@ -407,6 +425,7 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
 
 
 import { extractPdfTextFromArrayBuffer } from "@/lib/pdf";
+import ChatPanel from "@/components/ChatPanel";
 
 function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
