@@ -4,11 +4,12 @@ import { collections } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getUserFromCookies } from "@/lib/user";
 
-type Params = { params: { id: string } };
+// Facing some issue with params while build
+type Params =  any // { params: { id: string } };
 
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: Params
 ) {
   const { id } = params;
 
@@ -25,7 +26,7 @@ export async function GET(
   return NextResponse.json({ ok: true, ...collection[0] });
 }
 
-export async function PATCH(req: NextRequest, { params }: any) {
+export async function PATCH(req: NextRequest, { params }: Params) {
   const user = await getUserFromCookies();
   if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
@@ -49,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: any) {
   return NextResponse.json({ ok: true, collection: updated });
 }
 
-export async function DELETE(req: NextRequest, { params }: any) {
+export async function DELETE(req: NextRequest, { params }: Params) {
   const user = await getUserFromCookies();
   if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
