@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { collections } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -6,7 +6,7 @@ import { getUserFromCookies } from "@/lib/user";
 
 type Params = { params: { id: string } };
 
-export async function PATCH(req: Request, { params }: Params) {
+export async function PATCH(req: NextRequest, { params }: any) {
   const user = await getUserFromCookies();
   if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: Params) {
   return NextResponse.json({ ok: true, collection: updated });
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(req: NextRequest, { params }: any) {
   const user = await getUserFromCookies();
   if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 

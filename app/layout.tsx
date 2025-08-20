@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import UsernameModal from "@/components/UsernameModal";
 import { Toaster } from "react-hot-toast";
 
-export const meta: Metadata = {
+export const metadata: Metadata = {
   title: "NovaNote",
   description: "AI-powered knowledge notebook (POC)",
 };

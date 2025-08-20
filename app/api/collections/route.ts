@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { collections, knowledgeItems, users } from "@/db/schema";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { getUserFromCookies } from "@/lib/user";
 
 export async function GET() {
@@ -21,7 +21,12 @@ export async function GET() {
   })
   .from(collections)
   .leftJoin(knowledgeItems, eq(knowledgeItems.collectionId, collections.id))
-  .where(eq(collections.userId, user.id))
+  .where(
+    or(
+      eq(collections.userId, user.id),       // Owned by user
+      eq(collections.isShared, true)         // Or shared collections
+    )
+  )
   .groupBy(collections.id)
   .orderBy(desc(sql`GREATEST(${collections.updatedAt}, ${collections.createdAt})`));
 
