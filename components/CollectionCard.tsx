@@ -12,14 +12,14 @@ export default function CollectionCard({ c, onEdit }: { c: Collection; onEdit: (
     <div className="card p-4 vstack gap-3">
       <div className="hstack justify-between">
         <h3 className="text-lg font-semibold">{c.name}</h3>
-        <div className="hstack gap-2">
+        {!c.isShared && <div className="hstack gap-2">
           <button className="btn btn-ghost" onClick={() => onEdit(c)} title="Edit">
             <Pencil size={16} />
           </button>
           <button className="btn btn-ghost" onClick={() => del.mutate(c.id)} title="Delete">
             <Trash2 size={16} />
           </button>
-        </div>
+        </div>}
       </div>
       <p className="text-sm text-muted flex-1">{c.description || "No description"}</p>
       <div className="hstack justify-between text-sm text-muted">

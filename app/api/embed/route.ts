@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserFromCookies } from "@/lib/user";
 import { db } from "@/db/client";
 import { collections, knowledgeItems } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { buildDocumentsFromText } from "@/lib/docs";
 import { addDocuments } from "@/lib/rag";
 
@@ -16,7 +16,11 @@ export async function POST(req: Request) {
   }
 
   // Ownership and item check
-  const owned = await db.select().from(collections).where(and(eq(collections.id, collectionId), eq(collections.userId, user.id))).limit(1);
+  const owned = await db.select().from(collections).where(
+    or(
+      and(eq(collections.id, collectionId), eq(collections.userId, user.id)),
+      eq(collections.isShared, true)  
+    )).limit(1);
   if (!owned.length) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
 
   const item = await db.select().from(knowledgeItems).where(and(eq(knowledgeItems.id, itemId), eq(knowledgeItems.collectionId, collectionId))).limit(1);

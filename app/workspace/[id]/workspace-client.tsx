@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Link2, FileDown, Trash2, SquarePlus, MessagesSquare, Globe } from "lucide-react";
+import {
+  FileText,
+  Link2,
+  FileDown,
+  Trash2,
+  SquarePlus,
+  MessagesSquare,
+  Globe,
+} from "lucide-react";
 import ChatPanel from "@/components/ChatPanel";
 import { toast } from "react-hot-toast";
 import { extractPdfTextFromArrayBuffer } from "@/lib/pdf";
@@ -50,18 +58,30 @@ export default function WorkspaceClient({ id }: { id: string }) {
     },
   });
 
-  const { data: items, isLoading: itemsLoading, refetch: refetchItems } = useQuery({
+  const {
+    data: items,
+    isLoading: itemsLoading,
+    refetch: refetchItems,
+  } = useQuery({
     queryKey: ["items", id],
     queryFn: () => fetchItems(id),
   });
 
-  const { data: limits, isLoading: limitsLoading, refetch: refetchLimits } = useQuery({
+  const {
+    data: limits,
+    isLoading: limitsLoading,
+    refetch: refetchLimits,
+  } = useQuery({
     queryKey: ["limits", id],
     queryFn: () => fetchLimits(id),
   });
 
   const grouped = useMemo(() => {
-    const g: Record<"text" | "link" | "pdf", Item[]> = { text: [], link: [], pdf: [] };
+    const g: Record<"text" | "link" | "pdf", Item[]> = {
+      text: [],
+      link: [],
+      pdf: [],
+    };
     (items ?? []).forEach((it) => g[it.type].push(it));
     return g;
   }, [items]);
@@ -91,8 +111,10 @@ export default function WorkspaceClient({ id }: { id: string }) {
   const [showAddPDF, setShowAddPDF] = useState(false);
 
   // Quick limit flags
-  const textFull = limits && !limits.isPro && limits.text.used >= limits.text.max;
-  const linkFull = limits && !limits.isPro && limits.link.used >= limits.link.max;
+  const textFull =
+    limits && !limits.isPro && limits.text.used >= limits.text.max;
+  const linkFull =
+    limits && !limits.isPro && limits.link.used >= limits.link.max;
   const pdfFull = limits && !limits.isPro && limits.pdf.used >= limits.pdf.max;
 
   return (
@@ -100,21 +122,40 @@ export default function WorkspaceClient({ id }: { id: string }) {
       {/* Sidebar */}
       <aside className="card p-4 vstack gap-4 max-h-[80vh] overflow-y-auto">
         <div className="vstack gap-2">
-          <h2 className="text-lg font-semibold">{collection?.name ?? "Knowledge"}</h2>
+          <h2 className="text-lg font-semibold">
+            {collection?.name ?? "Knowledge"}
+          </h2>
           <p className="text-sm text-muted">Manage items in this collection</p>
         </div>
 
         {/* Usage */}
         <div className="vstack gap-2">
-          <UsageRow label="Texts" used={limits?.text.used ?? 0} max={limits?.text.max ?? 2} loading={limitsLoading} />
-          <UsageRow label="Links" used={limits?.link.used ?? 0} max={limits?.link.max ?? 2} loading={limitsLoading} />
-          <UsageRow label="PDFs" used={limits?.pdf.used ?? 0} max={limits?.pdf.max ?? 1} loading={limitsLoading} />
+          <UsageRow
+            label="Texts"
+            used={limits?.text.used ?? 0}
+            max={limits?.text.max ?? 2}
+            loading={limitsLoading}
+          />
+          <UsageRow
+            label="Links"
+            used={limits?.link.used ?? 0}
+            max={limits?.link.max ?? 2}
+            loading={limitsLoading}
+          />
+          <UsageRow
+            label="PDFs"
+            used={limits?.pdf.used ?? 0}
+            max={limits?.pdf.max ?? 1}
+            loading={limitsLoading}
+          />
         </div>
 
         {/* Add buttons with disabled and tooltip */}
         <div className="vstack">
           <button
-            className={`btn btn-ghost ${textFull ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`btn btn-ghost ${
+              textFull ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             disabled={!!textFull}
             title={textFull ? "Upgrade to Pro for more texts" : "Add Text"}
             onClick={() => setShowAddText(true)}
@@ -123,7 +164,9 @@ export default function WorkspaceClient({ id }: { id: string }) {
             <SquarePlus size={16} /> Add Text {textFull ? "(limit)" : ""}
           </button>
           <button
-            className={`btn btn-ghost ${linkFull ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`btn btn-ghost ${
+              linkFull ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             disabled={!!linkFull}
             title={linkFull ? "Upgrade to Pro for more links" : "Add Link"}
             onClick={() => setShowAddLink(true)}
@@ -132,7 +175,9 @@ export default function WorkspaceClient({ id }: { id: string }) {
             <SquarePlus size={16} /> Add Link {linkFull ? "(limit)" : ""}
           </button>
           <button
-            className={`btn btn-ghost ${pdfFull ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`btn btn-ghost ${
+              pdfFull ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             disabled={!!pdfFull}
             title={pdfFull ? "Upgrade to Pro for more PDFs" : "Add PDF"}
             onClick={() => setShowAddPDF(true)}
@@ -150,7 +195,14 @@ export default function WorkspaceClient({ id }: { id: string }) {
             <EmptyLine text="No texts" />
           ) : (
             grouped.text.map((it) => (
-              <ItemRow key={it.id} it={it} onDelete={() => onDelete(it.id)} deleting={deleting === it.id} onOpen={() => setTab("chat")} />
+              <ItemRow
+                key={it.id}
+                it={it}
+                onDelete={() => onDelete(it.id)}
+                deleting={deleting === it.id}
+                onOpen={() => setTab("chat")}
+                isShared={collection?.isShared}
+              />
             ))
           )}
         </Section>
@@ -167,6 +219,7 @@ export default function WorkspaceClient({ id }: { id: string }) {
                 it={it}
                 onDelete={() => onDelete(it.id)}
                 deleting={deleting === it.id}
+                isShared={collection?.isShared}
                 onOpen={() => {
                   if (it.url) setSelectedLink(it.url);
                   setTab("iframe");
@@ -183,7 +236,14 @@ export default function WorkspaceClient({ id }: { id: string }) {
             <EmptyLine text="No PDFs" />
           ) : (
             grouped.pdf.map((it) => (
-              <ItemRow key={it.id} it={it} onDelete={() => onDelete(it.id)} deleting={deleting === it.id} onOpen={() => setTab("chat")} />
+              <ItemRow
+                key={it.id}
+                it={it}
+                onDelete={() => onDelete(it.id)}
+                deleting={deleting === it.id}
+                onOpen={() => setTab("chat")}
+                isShared={collection?.isShared}
+              />
             ))
           )}
         </Section>
@@ -192,11 +252,17 @@ export default function WorkspaceClient({ id }: { id: string }) {
       {/* Main Panel */}
       <section className="vstack gap-4">
         {/* Tabs */}
-        <div className="hstack gap-2" role="tablist" aria-label="Workspace tabs">
+        <div
+          className="hstack gap-2"
+          role="tablist"
+          aria-label="Workspace tabs"
+        >
           <button
             role="tab"
             aria-selected={tab === "chat"}
-            className={`btn btn-ghost ${tab === "chat" ? "border border-[rgba(255,255,255,.12)]" : ""}`}
+            className={`btn btn-ghost ${
+              tab === "chat" ? "border border-[rgba(255,255,255,.12)]" : ""
+            }`}
             onClick={() => setTab("chat")}
           >
             <MessagesSquare size={16} /> Chat
@@ -204,7 +270,9 @@ export default function WorkspaceClient({ id }: { id: string }) {
           <button
             role="tab"
             aria-selected={tab === "iframe"}
-            className={`btn btn-ghost ${tab === "iframe" ? "border border-[rgba(255,255,255,.12)]" : ""}`}
+            className={`btn btn-ghost ${
+              tab === "iframe" ? "border border-[rgba(255,255,255,.12)]" : ""
+            }`}
             onClick={() => setTab("iframe")}
           >
             <Globe size={16} /> Iframe
@@ -232,9 +300,15 @@ export default function WorkspaceClient({ id }: { id: string }) {
         ) : (
           <div className="card p-0 min-h-[60vh] overflow-hidden">
             {selectedLink ? (
-              <iframe src={selectedLink} className="w-full h-[70vh]" title="Linked Content" />
+              <iframe
+                src={selectedLink}
+                className="w-full h-[70vh]"
+                title="Linked Content"
+              />
             ) : (
-              <div className="p-6 text-muted">Select a link item to open it here.</div>
+              <div className="p-6 text-muted">
+                Select a link item to open it here.
+              </div>
             )}
           </div>
         )}
@@ -274,7 +348,15 @@ export default function WorkspaceClient({ id }: { id: string }) {
 
 /* -- Helper UI Components -- */
 
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="vstack gap-2" aria-label={title}>
       <div className="hstack gap-2 text-sm text-muted">
@@ -286,7 +368,19 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   );
 }
 
-function ItemRow({ it, onDelete, onOpen, deleting }: { it: Item; onDelete: () => void; onOpen: () => void; deleting: boolean }) {
+function ItemRow({
+  it,
+  onDelete,
+  onOpen,
+  deleting,
+  isShared = false,
+}: {
+  it: Item;
+  onDelete: () => void;
+  onOpen: () => void;
+  deleting: boolean;
+  isShared?: boolean;
+}) {
   return (
     <div className="hstack justify-between" role="listitem">
       <button
@@ -297,30 +391,54 @@ function ItemRow({ it, onDelete, onOpen, deleting }: { it: Item; onDelete: () =>
       >
         {it.title}
       </button>
-      <button
-        className="btn btn-ghost"
-        onClick={onDelete}
-        disabled={deleting}
-        title="Delete"
-        aria-label={`Delete ${it.type} item: ${it.title}`}
-      >
-        <Trash2 size={14} />
-      </button>
+      {!isShared && (
+        <button
+          className="btn btn-ghost"
+          onClick={onDelete}
+          disabled={deleting}
+          title="Delete"
+          aria-label={`Delete ${it.type} item: ${it.title}`}
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
     </div>
   );
 }
 
-function UsageRow({ label, used, max, loading }: { label: string; used: number; max: number; loading: boolean }) {
+function UsageRow({
+  label,
+  used,
+  max,
+  loading,
+}: {
+  label: string;
+  used: number;
+  max: number;
+  loading: boolean;
+}) {
   return (
-    <div className="vstack gap-1" aria-label={`${label} usage: ${used} of ${max}`}>
+    <div
+      className="vstack gap-1"
+      aria-label={`${label} usage: ${used} of ${max}`}
+    >
       <div className="hstack justify-between text-sm">
         <span className="text-muted">{label}</span>
         <span className="text-muted">{loading ? "…" : `${used}/${max}`}</span>
       </div>
-      <div className="w-full h-1.5 bg-[rgba(255,255,255,.08)] rounded" role="progressbar" aria-valuemin={0} aria-valuemax={max} aria-valuenow={used}>
+      <div
+        className="w-full h-1.5 bg-[rgba(255,255,255,.08)] rounded"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={used}
+      >
         <div
           className="h-1.5 rounded"
-          style={{ width: `${Math.min(100, (used / Math.max(1, max)) * 100)}%`, background: "rgb(var(--color-primary))" }}
+          style={{
+            width: `${Math.min(100, (used / Math.max(1, max)) * 100)}%`,
+            background: "rgb(var(--color-primary))",
+          }}
         />
       </div>
     </div>
@@ -328,7 +446,12 @@ function UsageRow({ label, used, max, loading }: { label: string; used: number; 
 }
 
 function SkeletonLine() {
-  return <div className="h-6 bg-[rgba(255,255,255,.06)] rounded animate-pulse" aria-hidden="true" />;
+  return (
+    <div
+      className="h-6 bg-[rgba(255,255,255,.06)] rounded animate-pulse"
+      aria-hidden="true"
+    />
+  );
 }
 function EmptyLine({ text }: { text: string }) {
   return (
@@ -339,7 +462,13 @@ function EmptyLine({ text }: { text: string }) {
 }
 
 /* -- AddTextModal Component -- */
-function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
+function AddTextModal({
+  collectionId,
+  onClose,
+}: {
+  collectionId: string;
+  onClose: () => void;
+}) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -354,11 +483,19 @@ function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose
       const createRes = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collectionId, type: "text", title: title.trim() }),
+        body: JSON.stringify({
+          collectionId,
+          type: "text",
+          title: title.trim(),
+        }),
       });
       if (!createRes.ok) {
         const e = await createRes.json().catch(() => ({}));
-        toast.error(e?.error === "limit-reached" ? "Free plan: max 2 texts per collection." : "Failed to create item.");
+        toast.error(
+          e?.error === "limit-reached"
+            ? "Free plan: max 2 texts per collection."
+            : "Failed to create item."
+        );
         return;
       }
       const { item } = await createRes.json();
@@ -401,13 +538,23 @@ function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
-      <ModalButtons onCancel={onClose} onConfirm={onSubmit} confirmDisabled={loading || !title || !content} />
+      <ModalButtons
+        onCancel={onClose}
+        onConfirm={onSubmit}
+        confirmDisabled={loading || !title || !content}
+      />
     </Modal>
   );
 }
 
 /* -- AddLinkModal Component -- */
-function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
+function AddLinkModal({
+  collectionId,
+  onClose,
+}: {
+  collectionId: string;
+  onClose: () => void;
+}) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -425,7 +572,11 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
       });
       if (!crawlRes.ok) {
         const e = await crawlRes.json().catch(() => ({}));
-        toast.error(e?.error === "empty-content" ? "No readable content found." : "Failed to fetch page.");
+        toast.error(
+          e?.error === "empty-content"
+            ? "No readable content found."
+            : "Failed to fetch page."
+        );
         return;
       }
       const { title, content } = await crawlRes.json();
@@ -433,11 +584,20 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
       const createRes = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collectionId, type: "link", title, url: url.trim() }),
+        body: JSON.stringify({
+          collectionId,
+          type: "link",
+          title,
+          url: url.trim(),
+        }),
       });
       if (!createRes.ok) {
         const e = await createRes.json().catch(() => ({}));
-        toast.error(e?.error === "limit-reached" ? "Free plan: max 2 links per collection." : "Failed to create item.");
+        toast.error(
+          e?.error === "limit-reached"
+            ? "Free plan: max 2 links per collection."
+            : "Failed to create item."
+        );
         return;
       }
       const { item } = await createRes.json();
@@ -467,14 +627,29 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
 
   return (
     <Modal onClose={onClose} title="Add Link" loading={loading}>
-      <input className="input" placeholder="https://example.com/article" value={url} onChange={(e) => setUrl(e.target.value)} />
-      <ModalButtons onCancel={onClose} onConfirm={onSubmit} confirmDisabled={loading || !url} />
+      <input
+        className="input"
+        placeholder="https://example.com/article"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+      />
+      <ModalButtons
+        onCancel={onClose}
+        onConfirm={onSubmit}
+        confirmDisabled={loading || !url}
+      />
     </Modal>
   );
 }
 
 /* -- AddPDFModal Component -- */
-function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
+function AddPDFModal({
+  collectionId,
+  onClose,
+}: {
+  collectionId: string;
+  onClose: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -496,7 +671,11 @@ function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose:
       });
       if (!createRes.ok) {
         const e = await createRes.json().catch(() => ({}));
-        toast.error(e?.error === "limit-reached" ? "Free plan: max 1 PDF per collection." : "Failed to create item.");
+        toast.error(
+          e?.error === "limit-reached"
+            ? "Free plan: max 1 PDF per collection."
+            : "Failed to create item."
+        );
         return;
       }
       const { item } = await createRes.json();
@@ -532,7 +711,11 @@ function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose:
         accept="application/pdf"
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
-      <ModalButtons onCancel={onClose} onConfirm={onSubmit} confirmDisabled={loading || !file} />
+      <ModalButtons
+        onCancel={onClose}
+        onConfirm={onSubmit}
+        confirmDisabled={loading || !file}
+      />
     </Modal>
   );
 }
@@ -557,9 +740,16 @@ function Modal({
     return () => window.removeEventListener("keydown", escHandler);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 grid place-items-center bg-black/50 z-50" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div
+      className="fixed inset-0 grid place-items-center bg-black/50 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="card p-5 w-full max-w-lg vstack gap-4">
-        <h3 id="modal-title" className="text-lg font-semibold">{title}</h3>
+        <h3 id="modal-title" className="text-lg font-semibold">
+          {title}
+        </h3>
         {children}
         {loading && <p className="text-muted">Processing…</p>}
       </div>
@@ -581,7 +771,11 @@ function ModalButtons({
       <button className="btn btn-ghost" onClick={onCancel}>
         Cancel
       </button>
-      <button className="btn btn-primary" onClick={onConfirm} disabled={confirmDisabled}>
+      <button
+        className="btn btn-primary"
+        onClick={onConfirm}
+        disabled={confirmDisabled}
+      >
         Add
       </button>
     </div>

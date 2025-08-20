@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { knowledgeItems, collections } from "@/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { getUserFromCookies } from "@/lib/user";
 
 const FREE = { text: 2, link: 2, pdf: 1 };
@@ -14,7 +14,12 @@ export async function GET(req: Request) {
   const collectionId = searchParams.get("collectionId");
   if (!collectionId) return NextResponse.json({ ok: false, error: "collectionId-required" }, { status: 400 });
 
-  const owned = await db.select().from(collections).where(and(eq(collections.id, collectionId), eq(collections.userId, user.id))).limit(1);
+  const owned = await db.select().from(collections).where(
+    or(
+      and(eq(collections.id, collectionId), eq(collections.userId, user.id)),
+      eq(collections.isShared, true)  
+    )
+  ).limit(1);
   if (!owned.length) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
 
   const items = await db
@@ -39,7 +44,12 @@ export async function POST(req: Request) {
   }
 
   // Ownership check
-  const owned = await db.select().from(collections).where(and(eq(collections.id, collectionId), eq(collections.userId, user.id))).limit(1);
+  const owned = await db.select().from(collections).where(
+    or(
+      and(eq(collections.id, collectionId), eq(collections.userId, user.id)),
+      eq(collections.isShared, true)  
+    )
+  ).limit(1);
   if (!owned.length) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
 
   // Enforce per-collection limits for free users

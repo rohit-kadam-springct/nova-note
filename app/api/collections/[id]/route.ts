@@ -6,6 +6,25 @@ import { getUserFromCookies } from "@/lib/user";
 
 type Params = { params: { id: string } };
 
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+
+  const collection = await db
+    .select()
+    .from(collections)
+    .where(eq(collections.id, id))
+    .limit(1);
+
+  if (!collection.length) {
+    return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true, ...collection[0] });
+}
+
 export async function PATCH(req: NextRequest, { params }: any) {
   const user = await getUserFromCookies();
   if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
