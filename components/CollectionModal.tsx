@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCreateCollection, useUpdateCollection, Collection } from "@/hooks/useCollections";
+import toast from "react-hot-toast";
 
 export default function CollectionModal({
   open,
@@ -39,8 +40,7 @@ export default function CollectionModal({
       }
       onClose();
     } catch (e: any) {
-      // TODO: use toast message
-      alert(e?.message === "limit-reached" ? "Free plan allows max 2 collections." : "Failed to save.");
+      toast.error(e?.message === "limit-reached" ? "Free plan allows max 2 collections." : "Failed to save.");
     }
     onClose();
   };

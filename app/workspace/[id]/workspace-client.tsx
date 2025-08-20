@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { FileText, Link2, FileDown, Trash2, SquarePlus, MessagesSquare, Globe } from "lucide-react";
+import ChatPanel from "@/components/ChatPanel";
+import { toast } from "react-hot-toast";
+import { extractPdfTextFromArrayBuffer } from "@/lib/pdf";
 
 type Item = {
   id: string;
@@ -34,17 +36,16 @@ async function fetchLimits(collectionId: string): Promise<Limits> {
 }
 
 export default function WorkspaceClient({ id }: { id: string }) {
-  const router = useRouter();
   const [tab, setTab] = useState<"chat" | "iframe">("chat");
   const [selectedLink, setSelectedLink] = useState<string | null>(null); // url
   const [deleting, setDeleting] = useState<string | null>(null); // item id
 
-  const {  data: items, isLoading: itemsLoading, refetch: refetchItems } = useQuery({
+  const { data: items, isLoading: itemsLoading, refetch: refetchItems } = useQuery({
     queryKey: ["items", id],
     queryFn: () => fetchItems(id),
   });
 
-  const {  data: limits, isLoading: limitsLoading, refetch: refetchLimits } = useQuery({
+  const { data: limits, isLoading: limitsLoading, refetch: refetchLimits } = useQuery({
     queryKey: ["limits", id],
     queryFn: () => fetchLimits(id),
   });
@@ -57,24 +58,29 @@ export default function WorkspaceClient({ id }: { id: string }) {
 
   // Delete item handler
   const onDelete = async (itemId: string) => {
+    if (!confirm("Delete this item?")) return;
     try {
       setDeleting(itemId);
       const res = await fetch(`/api/items?id=${itemId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("delete-failed");
+      if (!res.ok) {
+        toast.error("Failed to delete item.");
+        return;
+      }
+      toast.success("Item deleted");
       await Promise.all([refetchItems(), refetchLimits()]);
-    } catch (e) {
-      alert("Failed to delete item.");
+    } catch {
+      toast.error("Failed to delete item.");
     } finally {
       setDeleting(null);
     }
   };
 
-  // Add handlers just flip small client modals; real wiring in next hour
+  // Add modal control states
   const [showAddText, setShowAddText] = useState(false);
   const [showAddLink, setShowAddLink] = useState(false);
   const [showAddPDF, setShowAddPDF] = useState(false);
 
-  // Quick limit helpers
+  // Quick limit flags
   const textFull = limits && !limits.isPro && limits.text.used >= limits.text.max;
   const linkFull = limits && !limits.isPro && limits.link.used >= limits.link.max;
   const pdfFull = limits && !limits.isPro && limits.pdf.used >= limits.pdf.max;
@@ -82,7 +88,7 @@ export default function WorkspaceClient({ id }: { id: string }) {
   return (
     <main className="container py-6 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4">
       {/* Sidebar */}
-      <aside className="card p-4 vstack gap-4">
+      <aside className="card p-4 vstack gap-4 max-h-[80vh] overflow-y-auto">
         <div className="vstack gap-2">
           <h2 className="text-lg font-semibold">Knowledge</h2>
           <p className="text-sm text-muted">Manage items in this collection</p>
@@ -95,20 +101,38 @@ export default function WorkspaceClient({ id }: { id: string }) {
           <UsageRow label="PDFs" used={limits?.pdf.used ?? 0} max={limits?.pdf.max ?? 1} loading={limitsLoading} />
         </div>
 
-        {/* Add buttons */}
+        {/* Add buttons with disabled and tooltip */}
         <div className="vstack">
-          <button className="btn btn-ghost" disabled={!!textFull} onClick={() => setShowAddText(true)}>
+          <button
+            className={`btn btn-ghost ${textFull ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={!!textFull}
+            title={textFull ? "Upgrade to Pro for more texts" : "Add Text"}
+            onClick={() => setShowAddText(true)}
+            aria-label="Add Text"
+          >
             <SquarePlus size={16} /> Add Text {textFull ? "(limit)" : ""}
           </button>
-          <button className="btn btn-ghost" disabled={!!linkFull} onClick={() => setShowAddLink(true)}>
+          <button
+            className={`btn btn-ghost ${linkFull ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={!!linkFull}
+            title={linkFull ? "Upgrade to Pro for more links" : "Add Link"}
+            onClick={() => setShowAddLink(true)}
+            aria-label="Add Link"
+          >
             <SquarePlus size={16} /> Add Link {linkFull ? "(limit)" : ""}
           </button>
-          <button className="btn btn-ghost" disabled={!!pdfFull} onClick={() => setShowAddPDF(true)}>
+          <button
+            className={`btn btn-ghost ${pdfFull ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={!!pdfFull}
+            title={pdfFull ? "Upgrade to Pro for more PDFs" : "Add PDF"}
+            onClick={() => setShowAddPDF(true)}
+            aria-label="Add PDF"
+          >
             <SquarePlus size={16} /> Add PDF {pdfFull ? "(limit)" : ""}
           </button>
         </div>
 
-        {/* Items */}
+        {/* Items list sections */}
         <Section title="Texts" icon={<FileText size={16} />}>
           {itemsLoading ? (
             <SkeletonLine />
@@ -157,55 +181,56 @@ export default function WorkspaceClient({ id }: { id: string }) {
 
       {/* Main Panel */}
       <section className="vstack gap-4">
-        <button className="btn btn-ghost" onClick={() => history.back()}>← Back</button>
         {/* Tabs */}
-        <div className="hstack gap-2">
-          <button className={`btn btn-ghost ${tab === "chat" ? "border border-[rgba(255,255,255,.12)]" : ""}`} onClick={() => setTab("chat")}>
+        <div className="hstack gap-2" role="tablist" aria-label="Workspace tabs">
+          <button
+            role="tab"
+            aria-selected={tab === "chat"}
+            className={`btn btn-ghost ${tab === "chat" ? "border border-[rgba(255,255,255,.12)]" : ""}`}
+            onClick={() => setTab("chat")}
+          >
             <MessagesSquare size={16} /> Chat
           </button>
-          <button className={`btn btn-ghost ${tab === "iframe" ? "border border-[rgba(255,255,255,.12)]" : ""}`} onClick={() => setTab("iframe")}>
+          <button
+            role="tab"
+            aria-selected={tab === "iframe"}
+            className={`btn btn-ghost ${tab === "iframe" ? "border border-[rgba(255,255,255,.12)]" : ""}`}
+            onClick={() => setTab("iframe")}
+          >
             <Globe size={16} /> Iframe
           </button>
         </div>
 
         {/* Panels */}
         {tab === "chat" ? (
-          <div className="card p-4 min-h-[60vh]">
-            <p className="text-muted">Chat panel will appear here. Ask questions using your collection’s knowledge.</p>
-            <div className="card p-4 min-h-[60vh]">
-              <ChatPanel
-                collectionId={id}
-                items={items ?? []}
-                onReferenceClick={(ref) => {
-                  const matched = items?.find(it => it.id === ref.itemId);
-                  if (!matched) return;
-                  // For links: switch to iframe tab + open sourceUrl
-                  if (matched.type === "link" && matched.url) {
-                    setSelectedLink(matched.url);
-                    setTab("iframe");
-                  }
-                  // For text/pdf: show source placeholder
-                  else {
-                    alert(`Source: ${matched.title} (${matched.type})`);
-                  }
-                }}
-              />
-            </div>
+          <div className="card p-4 min-h-[60vh] overflow-auto">
+            <ChatPanel
+              collectionId={id}
+              items={items ?? []}
+              onReferenceClick={(ref) => {
+                const matched = items?.find((it) => it.id === ref.itemId);
+                if (!matched) return;
+                if (matched.type === "link" && matched.url) {
+                  setSelectedLink(matched.url);
+                  setTab("iframe");
+                } else {
+                  toast(`Source: ${matched.title} (${matched.type})`);
+                }
+              }}
+            />
           </div>
         ) : (
           <div className="card p-0 min-h-[60vh] overflow-hidden">
             {selectedLink ? (
-              <iframe src={selectedLink} className="w-full h-[70vh]" />
+              <iframe src={selectedLink} className="w-full h-[70vh]" title="Linked Content" />
             ) : (
-              <div className="p-6">
-                <p className="text-muted">Select a link item to open it here.</p>
-              </div>
+              <div className="p-6 text-muted">Select a link item to open it here.</div>
             )}
           </div>
         )}
       </section>
 
-      {/* Add Modals (stubs for next hour) */}
+      {/* Add Modals */}
       {showAddText && (
         <AddTextModal
           onClose={async () => {
@@ -237,25 +262,38 @@ export default function WorkspaceClient({ id }: { id: string }) {
   );
 }
 
+/* -- Helper UI Components -- */
+
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="vstack gap-2">
+    <section className="vstack gap-2" aria-label={title}>
       <div className="hstack gap-2 text-sm text-muted">
         {icon}
         <span className="uppercase tracking-wide">{title}</span>
       </div>
       <div className="vstack gap-2">{children}</div>
-    </div>
+    </section>
   );
 }
 
 function ItemRow({ it, onDelete, onOpen, deleting }: { it: Item; onDelete: () => void; onOpen: () => void; deleting: boolean }) {
   return (
-    <div className="hstack justify-between">
-      <button className="text-left hover:underline truncate" onClick={onOpen} title={it.title}>
+    <div className="hstack justify-between" role="listitem">
+      <button
+        className="text-left hover:underline truncate"
+        onClick={onOpen}
+        title={it.title}
+        aria-label={`Open ${it.type} item: ${it.title}`}
+      >
         {it.title}
       </button>
-      <button className="btn btn-ghost" onClick={onDelete} disabled={deleting} title="Delete">
+      <button
+        className="btn btn-ghost"
+        onClick={onDelete}
+        disabled={deleting}
+        title="Delete"
+        aria-label={`Delete ${it.type} item: ${it.title}`}
+      >
         <Trash2 size={14} />
       </button>
     </div>
@@ -264,12 +302,12 @@ function ItemRow({ it, onDelete, onOpen, deleting }: { it: Item; onDelete: () =>
 
 function UsageRow({ label, used, max, loading }: { label: string; used: number; max: number; loading: boolean }) {
   return (
-    <div className="vstack gap-1">
+    <div className="vstack gap-1" aria-label={`${label} usage: ${used} of ${max}`}>
       <div className="hstack justify-between text-sm">
         <span className="text-muted">{label}</span>
         <span className="text-muted">{loading ? "…" : `${used}/${max}`}</span>
       </div>
-      <div className="w-full h-1.5 bg-[rgba(255,255,255,.08)] rounded">
+      <div className="w-full h-1.5 bg-[rgba(255,255,255,.08)] rounded" role="progressbar" aria-valuemin={0} aria-valuemax={max} aria-valuenow={used}>
         <div
           className="h-1.5 rounded"
           style={{ width: `${Math.min(100, (used / Math.max(1, max)) * 100)}%`, background: "rgb(var(--color-primary))" }}
@@ -280,23 +318,29 @@ function UsageRow({ label, used, max, loading }: { label: string; used: number; 
 }
 
 function SkeletonLine() {
-  return <div className="h-6 bg-[rgba(255,255,255,.06)] rounded animate-pulse" />;
+  return <div className="h-6 bg-[rgba(255,255,255,.06)] rounded animate-pulse" aria-hidden="true" />;
 }
 function EmptyLine({ text }: { text: string }) {
-  return <div className="text-sm text-muted">{text}</div>;
+  return (
+    <div className="text-sm text-muted italic" aria-live="polite" role="region">
+      {text}
+    </div>
+  );
 }
 
-// Modal stubs; we wire actions next hour
+/* -- AddTextModal Component -- */
 function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim() || !content.trim()) {
+      toast.error("Title and content are required.");
+      return;
+    }
     setLoading(true);
     try {
-      // 1) create item
       const createRes = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -304,12 +348,11 @@ function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose
       });
       if (!createRes.ok) {
         const e = await createRes.json().catch(() => ({}));
-        alert(e?.error === "limit-reached" ? "Free plan: max 2 texts per collection." : "Failed to create item.");
+        toast.error(e?.error === "limit-reached" ? "Free plan: max 2 texts per collection." : "Failed to create item.");
         return;
       }
       const { item } = await createRes.json();
 
-      // 2) embed content to Qdrant
       const embedRes = await fetch("/api/embed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -323,9 +366,10 @@ function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose
         }),
       });
       if (!embedRes.ok) {
-        alert("Indexing failed, please try again.");
+        toast.error("Indexing failed, please try again.");
         return;
       }
+      toast.success("Text added!");
       onClose();
     } finally {
       setLoading(false);
@@ -333,32 +377,37 @@ function AddTextModal({ collectionId, onClose }: { collectionId: string; onClose
   };
 
   return (
-    <div className="fixed inset-0 grid place-items-center bg-black/50 z-50">
-      <div className="card p-5 w-full max-w-lg vstack gap-3">
-        <h3 className="text-lg font-semibold">Add Text</h3>
-        <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <textarea className="textarea h-48" placeholder="Paste your text…" value={content} onChange={(e) => setContent(e.target.value)} />
-        <div className="hstack justify-end">
-          <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
-          <button className="btn btn-primary" onClick={onSubmit} disabled={loading || !title || !content}>
-            {loading ? "Adding…" : "Add"}
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal onClose={onClose} title="Add Text" loading={loading}>
+      <input
+        className="input mb-3"
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        maxLength={100}
+      />
+      <textarea
+        className="textarea h-48"
+        placeholder="Paste your text here..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+      <ModalButtons onCancel={onClose} onConfirm={onSubmit} confirmDisabled={loading || !title || !content} />
+    </Modal>
   );
 }
 
-
+/* -- AddLinkModal Component -- */
 function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
-    if (!url.trim()) return;
+    if (!url.trim()) {
+      toast.error("URL is required.");
+      return;
+    }
     setLoading(true);
     try {
-      // 1) Crawl/extract
       const crawlRes = await fetch("/api/crawl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -366,12 +415,11 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
       });
       if (!crawlRes.ok) {
         const e = await crawlRes.json().catch(() => ({}));
-        alert(e?.error === "empty-content" ? "No readable content found." : "Failed to fetch page.");
+        toast.error(e?.error === "empty-content" ? "No readable content found." : "Failed to fetch page.");
         return;
       }
       const { title, content } = await crawlRes.json();
 
-      // 2) Create link item (store title and url)
       const createRes = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -379,12 +427,11 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
       });
       if (!createRes.ok) {
         const e = await createRes.json().catch(() => ({}));
-        alert(e?.error === "limit-reached" ? "Free plan: max 2 links per collection." : "Failed to create item.");
+        toast.error(e?.error === "limit-reached" ? "Free plan: max 2 links per collection." : "Failed to create item.");
         return;
       }
       const { item } = await createRes.json();
 
-      // 3) Embed extracted content
       const embedRes = await fetch("/api/embed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -398,9 +445,10 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
         }),
       });
       if (!embedRes.ok) {
-        alert("Indexing failed, please try again.");
+        toast.error("Indexing failed, please try again.");
         return;
       }
+      toast.success("Link added!");
       onClose();
     } finally {
       setLoading(false);
@@ -408,38 +456,29 @@ function AddLinkModal({ collectionId, onClose }: { collectionId: string; onClose
   };
 
   return (
-    <div className="fixed inset-0 grid place-items-center bg-black/50 z-50">
-      <div className="card p-5 w-full max-w-lg vstack gap-3">
-        <h3 className="text-lg font-semibold">Add Link</h3>
-        <input className="input" placeholder="https://example.com/article" value={url} onChange={(e) => setUrl(e.target.value)} />
-        <div className="hstack justify-end">
-          <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
-          <button className="btn btn-primary" onClick={onSubmit} disabled={loading || !url}>
-            {loading ? "Adding…" : "Add"}
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal onClose={onClose} title="Add Link" loading={loading}>
+      <input className="input" placeholder="https://example.com/article" value={url} onChange={(e) => setUrl(e.target.value)} />
+      <ModalButtons onCancel={onClose} onConfirm={onSubmit} confirmDisabled={loading || !url} />
+    </Modal>
   );
 }
 
-
-import { extractPdfTextFromArrayBuffer } from "@/lib/pdf";
-import ChatPanel from "@/components/ChatPanel";
-
+/* -- AddPDFModal Component -- */
 function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
-    if (!file) return;
+    if (!file) {
+      toast.error("PDF file required.");
+      return;
+    }
     setLoading(true);
     try {
       const ab = await file.arrayBuffer();
       const text = await extractPdfTextFromArrayBuffer(ab);
       const title = file.name.replace(/\.[^.]+$/, "");
 
-      // 1) Create pdf item
       const createRes = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -447,12 +486,11 @@ function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose:
       });
       if (!createRes.ok) {
         const e = await createRes.json().catch(() => ({}));
-        alert(e?.error === "limit-reached" ? "Free plan: max 1 PDF per collection." : "Failed to create item.");
+        toast.error(e?.error === "limit-reached" ? "Free plan: max 1 PDF per collection." : "Failed to create item.");
         return;
       }
       const { item } = await createRes.json();
 
-      // 2) Embed pdf text
       const embedRes = await fetch("/api/embed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -466,9 +504,10 @@ function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose:
         }),
       });
       if (!embedRes.ok) {
-        alert("Indexing failed, please try again.");
+        toast.error("Indexing failed, please try again.");
         return;
       }
+      toast.success("PDF added!");
       onClose();
     } finally {
       setLoading(false);
@@ -476,18 +515,65 @@ function AddPDFModal({ collectionId, onClose }: { collectionId: string; onClose:
   };
 
   return (
-    <div className="fixed inset-0 grid place-items-center bg-black/50 z-50">
-      <div className="card p-5 w-full max-w-lg vstack gap-3">
-        <h3 className="text-lg font-semibold">Add PDF</h3>
-        <input className="input" type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        <div className="hstack justify-end">
-          <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
-          <button className="btn btn-primary" onClick={onSubmit} disabled={loading || !file}>
-            {loading ? "Adding…" : "Add"}
-          </button>
-        </div>
+    <Modal onClose={onClose} title="Add PDF" loading={loading}>
+      <input
+        className="input"
+        type="file"
+        accept="application/pdf"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      />
+      <ModalButtons onCancel={onClose} onConfirm={onSubmit} confirmDisabled={loading || !file} />
+    </Modal>
+  );
+}
+
+/* -- Modal generic wrapper and buttons -- */
+function Modal({
+  children,
+  onClose,
+  title,
+  loading,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+  title: string;
+  loading?: boolean;
+}) {
+  useEffect(() => {
+    function escHandler(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", escHandler);
+    return () => window.removeEventListener("keydown", escHandler);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 grid place-items-center bg-black/50 z-50" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="card p-5 w-full max-w-lg vstack gap-4">
+        <h3 id="modal-title" className="text-lg font-semibold">{title}</h3>
+        {children}
+        {loading && <p className="text-muted">Processing…</p>}
       </div>
     </div>
   );
 }
 
+function ModalButtons({
+  onCancel,
+  onConfirm,
+  confirmDisabled,
+}: {
+  onCancel: () => void;
+  onConfirm: () => void;
+  confirmDisabled?: boolean;
+}) {
+  return (
+    <div className="hstack justify-end gap-3">
+      <button className="btn btn-ghost" onClick={onCancel}>
+        Cancel
+      </button>
+      <button className="btn btn-primary" onClick={onConfirm} disabled={confirmDisabled}>
+        Add
+      </button>
+    </div>
+  );
+}

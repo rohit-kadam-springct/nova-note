@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Providers from "./providers";
 import Header from "@/components/Header";
 import UsernameModal from "@/components/UsernameModal";
+import { Toaster } from "react-hot-toast";
 
 export const meta: Metadata = {
   title: "NovaNote",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           {children}
           <UsernameModal />
+          <Toaster position="bottom-center" />
         </Providers>
       </body>
     </html>

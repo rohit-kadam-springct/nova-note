@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCollections, Collection } from "@/hooks/useCollections";
 import CollectionCard from "@/components/CollectionCard";
 import CollectionModal from "@/components/CollectionModal";
+import { SkeletonCard } from "@/components/Skeleton";
 
 export default function Home() {
   const { data, isLoading, isError } = useCollections();
@@ -27,7 +28,7 @@ export default function Home() {
 
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-32 animate-pulse" />)}
+          {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       )}
 

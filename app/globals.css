@@ -52,6 +52,7 @@ body {
   border-radius: 10px;
   font-weight: 600;
   transition: opacity .15s ease, transform .05s ease;
+  cursor: pointer;
 }
 
 .btn:hover { opacity: .9; }
@@ -59,7 +60,7 @@ body {
 
 .btn-primary {
   background: rgb(var(--color-primary));
-  color: black;
+  color: white;
 }
 
 .btn-ghost {
