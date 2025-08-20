@@ -6,6 +6,7 @@ import { FileText, Link2, FileDown, Trash2, SquarePlus, MessagesSquare, Globe } 
 import ChatPanel from "@/components/ChatPanel";
 import { toast } from "react-hot-toast";
 import { extractPdfTextFromArrayBuffer } from "@/lib/pdf";
+import { Collection } from "@/hooks/useCollections";
 
 type Item = {
   id: string;
@@ -39,6 +40,15 @@ export default function WorkspaceClient({ id }: { id: string }) {
   const [tab, setTab] = useState<"chat" | "iframe">("chat");
   const [selectedLink, setSelectedLink] = useState<string | null>(null); // url
   const [deleting, setDeleting] = useState<string | null>(null); // item id
+
+  const { data: collection } = useQuery<Collection>({
+    queryKey: ["collection", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/collections/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch collection");
+      return res.json();
+    },
+  });
 
   const { data: items, isLoading: itemsLoading, refetch: refetchItems } = useQuery({
     queryKey: ["items", id],
@@ -90,7 +100,7 @@ export default function WorkspaceClient({ id }: { id: string }) {
       {/* Sidebar */}
       <aside className="card p-4 vstack gap-4 max-h-[80vh] overflow-y-auto">
         <div className="vstack gap-2">
-          <h2 className="text-lg font-semibold">Knowledge</h2>
+          <h2 className="text-lg font-semibold">{collection?.name ?? "Knowledge"}</h2>
           <p className="text-sm text-muted">Manage items in this collection</p>
         </div>
 

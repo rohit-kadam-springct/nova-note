@@ -94,3 +94,25 @@ body {
   flex-direction: column;
   gap: 0.75rem;
 }
+
+
+.scrollable {
+  scrollbar-width: thin;           /* Firefox */
+  scrollbar-color: #4b5563 #1f2937; /* thumb + track colors */
+
+  /* Chrome, Edge, Safari */
+}
+.scrollable::-webkit-scrollbar {
+  width: 6px; /* 👈 scrollbar width */
+}
+.scrollable::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+  border-radius: 8px;
+}
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* gray-600 */
+  border-radius: 8px;
+}
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* gray-500 */
+}

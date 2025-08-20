@@ -42,16 +42,14 @@ export async function similaritySearch(
 ) {
   const vectorStore = await getVectorStore();
   // Filter by metadata.collectionId
-  const results = await vectorStore.similaritySearch(query, k, {
+  const results = await vectorStore.similaritySearchWithScore(query, k, {
     must: [
       {
-        key: "collectionId",
-        match: {
-          value: collectionId,
-        },
+        key: "metadata.collectionId",
+        match: { value: collectionId.toString() },
       },
     ],
-  });
-
+  })
+  
   return results
 }

@@ -31,14 +31,16 @@ export async function POST(req: Request) {
 
   // 2) Build Context
   const contextBlocks = docs.map((d, i) => {
-    const m = d.metadata as any;
+    const m = d[0].metadata as any;
     const label = `[${i + 1}] ${m?.title ?? "Untitled"}${m?.sourceUrl ? ` - ${m.sourceUrl}` : ""}`;
-    return `${label}\n${d.pageContent}`;
+    return `${label}\n${d[0].pageContent}`;
   }).join("\n\n");
 
   // 3) LLM prompt
   const system = `You are NovaNote. Answer only using the provided context below. Use bracketed citations like [1], [1] that refer to the context blocks. If the answer is not in context, say you don't know. Be concise.`;
   const userMsg = `Question: ${question}\n\nContext:\n${contextBlocks}`;
+
+  console.log("userMsg", userMsg)
 
   const response = await client.chat.completions.create({
       model: CHAT_MODEL,
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
 
   // 4) References for mapping
   const references = docs.map((d, i) => {
-    const m = d.metadata as any;
+    const m = d[0].metadata as any;
     return { idx: i + 1, title: m?.title ?? "Untitled", url: m?.sourceUrl ?? null, itemId: m?.itemId, itemType: m?.itemType };
   });
 

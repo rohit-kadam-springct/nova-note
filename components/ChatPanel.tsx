@@ -67,31 +67,30 @@ export default function ChatPanel({
 
       {/* Answer */}
       {!!answer && (
-        <div className="card p-4 vstack gap-2">
-          <div className="prose prose-invert max-w-full">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
-          </div>
+  <div className="card p-4 vstack gap-4 max-h-[520px] overflow-y-auto scrollable scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 scrollbar-thumb-rounded-lg">
+    {/* Scrollable Answer */}
+    <div className="prose prose-invert max-w-full break-words  pr-2">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
+    </div>
 
-              {/* References */}
-          {references.length > 0 && (
-            <div className="hstack gap-2 flex-wrap mt-2">
-              <span className="text-muted text-xs">References:</span>
-              {references.map((ref) => (
-                <button
-                  key={ref.idx}
-                  className="btn btn-ghost text-xs"
-                  onClick={() =>
-                    onReferenceClick(ref)
-                  }
-                  title={ref.title}
-                >
-                  [{ref.idx}] {ref.title}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+    {/* References (outside scroll) */}
+    {references.length > 0 && (
+      <div className="hstack gap-2 flex-wrap">
+        <span className="text-muted text-xs">References:</span>
+        {references.map((ref) => (
+          <button
+            key={ref.idx}
+            className="btn btn-ghost text-xs"
+            onClick={() => onReferenceClick(ref)}
+            title={ref.title}
+          >
+            [{ref.idx}] {ref.title}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
     </div>
   );
 }

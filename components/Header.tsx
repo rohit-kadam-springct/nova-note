@@ -2,9 +2,14 @@
 import { CircleUserRound } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useUI } from "@/store/ui";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+
 
 export default function Header() {
   const { setUsernameModalOpen } = useUI();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const { data } = useQuery({
     queryKey: ["user"],
@@ -27,6 +32,15 @@ export default function Header() {
         <div className="hstack">
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgb(var(--color-accent))" }} />
           <span className="font-semibold">NovaNote</span>
+          {pathname !== "/" && (
+            <button
+              onClick={() => router.push("/")}
+              className="btn btn-ghost p-1 hover:underline"
+              aria-label="Back to Collections"
+            >
+              ← Collections
+            </button>
+          )}
         </div>
         <div className="hstack text-muted">
           <CircleUserRound size={18} />

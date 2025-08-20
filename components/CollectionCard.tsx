@@ -21,7 +21,7 @@ export default function CollectionCard({ c, onEdit }: { c: Collection; onEdit: (
           </button>
         </div>
       </div>
-      <p className="text-sm text-muted">{c.description || "No description"}</p>
+      <p className="text-sm text-muted flex-1">{c.description || "No description"}</p>
       <div className="hstack justify-between text-sm text-muted">
         <div className="hstack">
           <FileText size={16} />

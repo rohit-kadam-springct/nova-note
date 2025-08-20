@@ -93,6 +93,20 @@ BASE_URL=
 
 ---
 
+### Screenshots
+
+![alt text](docs/ss/ss-1.png)
+
+![alt text](docs/ss/ss-2.jpg)
+
+![alt text](docs/ss/ss-3.jpg)
+
+![alt text](docs/ss/ss-4.png)
+
+![alt text](docs/ss/ss-5.png)
+
+![alt text](docs/ss/ss-6.png)
+---
 ### Important Notes
 
 - No files are persisted; PDFs are parsed client-side.  
