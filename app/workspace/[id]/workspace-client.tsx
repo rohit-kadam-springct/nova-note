@@ -129,7 +129,7 @@ export default function WorkspaceClient({ id }: { id: string }) {
         </div>
 
         {/* Usage */}
-        <div className="vstack gap-2">
+        {!collection?.isShared && <div className="vstack gap-2">
           <UsageRow
             label="Texts"
             used={limits?.text.used ?? 0}
@@ -148,44 +148,46 @@ export default function WorkspaceClient({ id }: { id: string }) {
             max={limits?.pdf.max ?? 1}
             loading={limitsLoading}
           />
-        </div>
+        </div>}
 
         {/* Add buttons with disabled and tooltip */}
-        <div className="vstack">
-          <button
-            className={`btn btn-ghost ${
-              textFull ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={!!textFull}
-            title={textFull ? "Upgrade to Pro for more texts" : "Add Text"}
-            onClick={() => setShowAddText(true)}
-            aria-label="Add Text"
-          >
-            <SquarePlus size={16} /> Add Text {textFull ? "(limit)" : ""}
-          </button>
-          <button
-            className={`btn btn-ghost ${
-              linkFull ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={!!linkFull}
-            title={linkFull ? "Upgrade to Pro for more links" : "Add Link"}
-            onClick={() => setShowAddLink(true)}
-            aria-label="Add Link"
-          >
-            <SquarePlus size={16} /> Add Link {linkFull ? "(limit)" : ""}
-          </button>
-          <button
-            className={`btn btn-ghost ${
-              pdfFull ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={!!pdfFull}
-            title={pdfFull ? "Upgrade to Pro for more PDFs" : "Add PDF"}
-            onClick={() => setShowAddPDF(true)}
-            aria-label="Add PDF"
-          >
-            <SquarePlus size={16} /> Add PDF {pdfFull ? "(limit)" : ""}
-          </button>
+        {!collection?.isShared && (
+          <div className="vstack">
+            <button
+              className={`btn btn-ghost ${
+                textFull ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={!!textFull}
+              title={textFull ? "Upgrade to Pro for more texts" : "Add Text"}
+              onClick={() => setShowAddText(true)}
+              aria-label="Add Text"
+            >
+              <SquarePlus size={16} /> Add Text {textFull ? "(limit)" : ""}
+            </button>
+            <button
+              className={`btn btn-ghost ${
+                linkFull ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={!!linkFull}
+              title={linkFull ? "Upgrade to Pro for more links" : "Add Link"}
+              onClick={() => setShowAddLink(true)}
+              aria-label="Add Link"
+            >
+              <SquarePlus size={16} /> Add Link {linkFull ? "(limit)" : ""}
+            </button>
+            <button
+              className={`btn btn-ghost ${
+                pdfFull ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={!!pdfFull}
+              title={pdfFull ? "Upgrade to Pro for more PDFs" : "Add PDF"}
+              onClick={() => setShowAddPDF(true)}
+              aria-label="Add PDF"
+            >
+              <SquarePlus size={16} /> Add PDF {pdfFull ? "(limit)" : ""}
+            </button>
         </div>
+        )}
 
         {/* Items list sections */}
         <Section title="Texts" icon={<FileText size={16} />}>
