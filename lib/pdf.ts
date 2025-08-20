@@ -1,11 +1,15 @@
-import * as pdfjs from "pdfjs-dist/build/pdf";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?worker";
+import * as pdfjsLib from "pdfjs-dist";
 
-(pdfjs as any).GlobalWorkerOptions.workerPort = new (pdfWorker as any)();
+// Tell PDF.js where to find its worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.mjs",
+  import.meta.url
+).toString();
 
 export async function extractPdfTextFromArrayBuffer(ab: ArrayBuffer) {
-  const loadingTask = (pdfjs as any).getDocument({ data: ab });
+  const loadingTask = pdfjsLib.getDocument({ data: ab });
   const pdf = await loadingTask.promise;
+
   let all = "";
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);

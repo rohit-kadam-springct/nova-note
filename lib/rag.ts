@@ -33,6 +33,7 @@ export async function addDocuments(docs: Document[]) {
   const vectorStore = await getVectorStore();
   await vectorStore.addDocuments(docs);
 }
+
 // k = number of record to return
 export async function similaritySearch(
   collectionId: string,
